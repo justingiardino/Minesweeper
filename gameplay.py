@@ -107,7 +107,7 @@ class Board(object):
                 #turn 2d array into 1d
                 curr_val = (i * self.game_width) + j
                 if curr_val in self.bomb_locations:
-                    print('Bomb placed at i:{} j:{}\nWhere curr_val:{}'.format(i, j, curr_val ))
+                    #print('Bomb placed at i:{} j:{}\nWhere curr_val:{}'.format(i, j, curr_val ))
                     self.game_board[i][j] = 'X'
 
         print(self.bomb_locations)
@@ -151,18 +151,18 @@ class Board(object):
                     if (i+1 < self.game_height) and (j+1 < self.game_width):
                         if self.game_board[i+1][j+1] == 'X':
                             temp_count += 1
-                    print("temp_count: {}".format(temp_count))
+                    #print("temp_count: {}".format(temp_count))
                     #end of j iteration
                     if temp_count > 0:
-                        print("temp_count: {}".format(temp_count))
+                        #print("temp_count: {}".format(temp_count))
                         self.game_board[i][j] = str(temp_count)
                         self.hint_count += 1
-                        print("\n\n==============\nhint_count: {}\n==============\n\n".format(self.hint_count))
+                        #print("\n\n==============\nhint_count: {}\n==============\n\n".format(self.hint_count))
 
 
     def check_bomb(self, i_check, j_check):
-        temp_val = (j_check * self.game_width + i_check)
-        print(temp_val)
+        temp_val = (i_check * self.game_width + j_check)
+        #print(temp_val)
         if temp_val in self.bomb_locations:
             print("Bomb found!")
             self.view_board[i_check][j_check] = 'X'
