@@ -110,7 +110,7 @@ class Board(object):
                     #print('Bomb placed at i:{} j:{}\nWhere curr_val:{}'.format(i, j, curr_val ))
                     self.game_board[i][j] = 'X'
 
-        print(self.bomb_locations)
+        #print(self.bomb_locations)
         #now need to fill all other places on the board with a number showing how many bombs are near by
         for i in range(0,self.game_height):
             for j in range(0, self.game_width):

@@ -4,56 +4,125 @@
 
 import sys
 import gameplay
-from PyQt5.QtWidgets import QMainWindow, QGridLayout, QPushButton, QApplication, QWidget, QApplication, QVBoxLayout, QGroupBox, QAction, QCheckBox, QDockWidget, QLabel, QHBoxLayout
+from PyQt5.QtWidgets import QMainWindow, QGridLayout, QPushButton, QApplication, QWidget, QApplication, QVBoxLayout, QGroupBox, QAction, QCheckBox, QDockWidget, QLabel, QHBoxLayout, QLineEdit
 from PyQt5.QtCore import Qt, QTimer
 #from PyQt5.QtGui import QDrag
+
+class PopUpWindow(QWidget):
+    def __init__(self, pop_height, pop_width, pop_bombs):
+        super().__init__()
+        self.pop_height = pop_height
+        self.pop_width = pop_width
+        self.pop_bombs = pop_bombs
+        self.getVals()
+
+    def getVals(self):
+        self.height_label = QLabel("Height:")
+        self.width_label = QLabel("Width:")
+        self.bombs_label = QLabel("Bombs:")
+
+        #create line edit objects
+        self.height_edit = QLineEdit(str(self.pop_height))
+        self.width_edit = QLineEdit(str(self.pop_width))
+        self.bombs_edit = QLineEdit(str(self.pop_bombs))
+
+        #create a grid
+        self.pref_grid = QGridLayout()
+        self.pref_grid.setSpacing(10)
+
+        #add widgets to grid
+        self.pref_grid.addWidget(self.height_label, 1, 0)
+        self.pref_grid.addWidget(self.height_edit, 1, 1)
+        self.pref_grid.addWidget(self.width_label, 2, 0)
+        self.pref_grid.addWidget(self.width_edit, 2, 1)
+        self.pref_grid.addWidget(self.bombs_label, 3, 0)
+        self.pref_grid.addWidget(self.bombs_edit, 3, 1)
+
+        #Hbox for two buttons on bottom, in Vbox put grid on top and button box on bottom
+        button_box = QHBoxLayout()
+        ok_button = QPushButton("Ok")
+        ok_button.clicked.connect(self.ok_push)
+        cancel_button = QPushButton("Cancel")
+        cancel_button.clicked.connect(self.cancel_push)
+        button_box.addWidget(ok_button)
+        button_box.addWidget(cancel_button)
+
+        self.final_display = QVBoxLayout()
+        self.final_display.addLayout(self.pref_grid)
+        self.final_display.addLayout(button_box)
+
+        #self.setLayout(self.pref_grid)
+        self.setLayout(self.final_display)
+
+    def ok_push(self):
+        print("Ok was clicked")
+        self.close()
+
+    def cancel_push(self):
+        print("Cancel was clicked")
+        self.close()
 
 class DisplayMain(QMainWindow):
 
     def __init__(self):
         super().__init__()
         self.title = 'Main Window'
+        #Will default to this game setting, will need to be able to change in preferences later
+        self.new_game_height = 9
+        self.new_game_width = 9
+        self.new_game_bombs = 10
+        self.initUI()
+
+    def initUI(self):
+        self.game_height = self.new_game_height
+        self.game_width = self.new_game_width
+        self.game_bombs = self.new_game_bombs
         self.grid_buttons = {}
         self.grid = QGridLayout()
         self.display = QWidget()
         self.statusBar()
-        self.game_height = 9
-        self.game_width = 9
-        self.game_bombs = 10
         self.bomb_guess = self.game_bombs
         self.main_board = gameplay.Board(self.game_height, self.game_width, self.game_bombs)
         self.game_time = QTimer()
-        self.game_time.timeout.connect(self.update_time)
         self.time_display = 0
-        self.initUI()
-
-    def initUI(self):
-
         self.flag_mode = QCheckBox('Flag Mode', self)
         self.flag_mode.toggled.connect(self.flag_change)
         self.bomb_label = QLabel('Bombs Remaining: {}'.format(self.bomb_guess))
         self.time_label = QLabel('Time: {}'.format(self.time_display))
+        self.game_time.timeout.connect(self.update_time)
         temp_layout = QHBoxLayout()
-        temp_layout.addWidget(self.flag_mode)
-        temp_layout.addWidget(self.time_label)
-        temp_layout.addWidget(self.bomb_label)
+        temp_layout.addWidget(self.flag_mode) #Left
+        temp_layout.addWidget(self.time_label) #middle
+        temp_layout.addWidget(self.bomb_label) #right
         #create grid for display
         self.create_grid_layout()
 
         main_layout = QVBoxLayout()
-        #top row is where I can put more displays, just need an hbox instead of flag_moder
-        #main_layout.addWidget(self.flag_mode)
         main_layout.addLayout(temp_layout)
-        #add grid display
         main_layout.addWidget(self.horizontalGroupBox)
         self.display.setLayout(main_layout)
         self.setCentralWidget(self.display)
 
-        # menubar =self.menuBar()
-        # self.fileMenu =  menubar.addMenu('File')
-        # self.refreshAct = QAction('Refresh', self)
-        # self.fileMenu.addAction(self.refreshAct)
-        #1000 ms will update the clock
+        #menu bar
+        menubar =self.menuBar()
+
+        #menus
+        self.fileMenu =  menubar.addMenu('File')
+        self.editMenu = menubar.addMenu('Edit')
+
+        #actions
+        self.newAct = QAction('New Game', self)
+        self.prefAct = QAction('Preferences', self)
+
+        #action events
+        self.newAct.triggered.connect(self.initUI)
+        self.prefAct.triggered.connect(self.edit_preferences)
+
+        #add action to menu
+        self.fileMenu.addAction(self.newAct)
+        self.editMenu.addAction(self.prefAct)
+
+        #Every 1000 ms will update the clock
         self.game_time.start(1000)
         self.show()
 
@@ -133,6 +202,7 @@ class DisplayMain(QMainWindow):
             self.main_board.check_game_over()
             if self.main_board.game_over:
                 self.game_time.stop()
+                self.statusBar().showMessage(self.main_board.game_over_message)
                 print(self.main_board.game_over_message)
         else:
             print("Clock is not running")
@@ -140,6 +210,15 @@ class DisplayMain(QMainWindow):
     def update_time(self):
         self.time_display += 1
         self.time_label.setText('Time: {}'.format(self.time_display))
+
+    def edit_preferences(self):
+        print("Edit Preferences")
+        #create labels
+        self.pref_widget = PopUpWindow(self.game_height, self.game_width, self.game_bombs)
+        self.pref_widget.setGeometry(300, 300, 250, 150)
+        self.pref_widget.setWindowTitle('Preferences')
+        self.pref_widget.show()
+
 
 
     #might not need this, when doing a click action I can just use self.flag_mode.isChecked()
