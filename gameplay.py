@@ -160,7 +160,7 @@ class Board(object):
             #print("No bomb there")
             #self.display_board[y_check][x_check] = True
             self.flood_fill(i_check, j_check)
-            self.corner_display()
+            #self.corner_display()
         # self.print_board()
         # self.print_board_game()
         # self.check_game_over()
@@ -190,6 +190,23 @@ class Board(object):
         #up
         if i_check - 1 > -1:
             self.flood_fill(i_check - 1, j_check)
+
+        #top left
+        if i_check - 1 > -1 and j_check - 1 > -1:
+            self.flood_fill(i_check - 1, j_check - 1)
+
+        #top right
+        if i_check - 1 > -1 and j_check + 1 < self.game_width:
+            self.flood_fill(i_check - 1, j_check + 1)
+
+        #bottom left
+        if i_check + 1 < self.game_height and j_check - 1 > -1:
+            self.flood_fill(i_check + 1, j_check - 1)
+
+        #bottom right
+        if i_check + 1 < self.game_height and j_check + 1 < self.game_width:
+            self.flood_fill(i_check + 1, j_check + 1)
+
 
     def corner_display(self):
         for i in range(0,self.game_height):
