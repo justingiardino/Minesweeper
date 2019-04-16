@@ -4,7 +4,7 @@
 
 import sys
 import gameplay
-from PyQt5.QtWidgets import QMainWindow, QGridLayout, QPushButton, QApplication, QWidget, QApplication, QVBoxLayout, QGroupBox, QAction, QCheckBox, QDockWidget, QLabel, QHBoxLayout, QLineEdit
+from PyQt5.QtWidgets import QMainWindow, QGridLayout, QPushButton, QApplication, QWidget, QApplication, QVBoxLayout, QGroupBox, QAction, QCheckBox, QDockWidget, QLabel, QHBoxLayout, QLineEdit, qApp
 from PyQt5.QtCore import Qt, QTimer
 #from PyQt5.QtGui import QDrag
 
@@ -56,27 +56,63 @@ class PopUpWindow(QWidget):
 
     def ok_push(self):
         print("Ok was clicked")
+        self.pop_height = int(self.height_edit.text())
+        self.pop_width = int(self.width_edit.text())
+        self.pop_bombs = int(self.bombs_edit.text())
+        #print("\n\n=================\npop_height:{}\npop_width:{}\npop_bombs:{}\n=================\n\n".format(self.pop_height, self.pop_width, self.pop_bombs))
         self.close()
 
     def cancel_push(self):
         print("Cancel was clicked")
         self.close()
-
+'''
+Beginner:     H:9  W:9  B:10
+Intermediate: H:16 W:16 B:40
+Advanced:     H:16 W:30 B:99
+'''
 class DisplayMain(QMainWindow):
 
     def __init__(self):
         super().__init__()
         self.title = 'Main Window'
         #Will default to this game setting, will need to be able to change in preferences later
-        self.new_game_height = 9
-        self.new_game_width = 9
-        self.new_game_bombs = 10
+
+        #menu bar
+        menubar =self.menuBar()
+        self.game_height = 9
+        self.game_width = 9
+        self.game_bombs = 10
+        #menus
+        self.pref_widget = PopUpWindow(self.game_height, self.game_width, self.game_bombs)
+        menubar.setNativeMenuBar(False)
+        self.fileMenu =  menubar.addMenu('&File')
+        self.editMenu = menubar.addMenu('&Edit')
+
+        #actions
+        self.newAct = QAction('New Game', self)
+        self.prefAct = QAction('Preferences', self)
+        self.leaveAct = QAction('Leave', self)
+
+        #action events
+        self.newAct.triggered.connect(self.initUI)
+        self.prefAct.triggered.connect(self.edit_preferences)
+        self.leaveAct.triggered.connect(self.leave_game)
+
+        #add action to menu
+        self.fileMenu.addAction(self.newAct)
+        self.editMenu.addAction(self.prefAct)
+        self.fileMenu.addAction(self.leaveAct)
         self.initUI()
 
+
     def initUI(self):
-        self.game_height = self.new_game_height
-        self.game_width = self.new_game_width
-        self.game_bombs = self.new_game_bombs
+        #print("\n\n=================\npref_widget.pop_height:{}\npref_widget.pop_width:{}\npref_widget.pop_bombs:{}\n=================\n\n".format(self.pref_widget.pop_height, self.pref_widget.pop_width, self.pref_widget.pop_bombs))
+
+        self.game_height = self.pref_widget.pop_height
+        self.game_width = self.pref_widget.pop_width
+        self.game_bombs = self.pref_widget.pop_bombs
+        #print("\n\n=================\ngame_height:{}\ngame_width:{}\ngame_bombs:{}\n=================\n\n".format(self.game_height, self.game_width, self.game_bombs))
+        self.new_game = True
         self.grid_buttons = {}
         self.grid = QGridLayout()
         self.display = QWidget()
@@ -102,28 +138,10 @@ class DisplayMain(QMainWindow):
         main_layout.addWidget(self.horizontalGroupBox)
         self.display.setLayout(main_layout)
         self.setCentralWidget(self.display)
+        self.adjustSize()
+        #self.createPopUpMenu()
 
-        #menu bar
-        menubar =self.menuBar()
 
-        #menus
-        self.fileMenu =  menubar.addMenu('File')
-        self.editMenu = menubar.addMenu('Edit')
-
-        #actions
-        self.newAct = QAction('New Game', self)
-        self.prefAct = QAction('Preferences', self)
-
-        #action events
-        self.newAct.triggered.connect(self.initUI)
-        self.prefAct.triggered.connect(self.edit_preferences)
-
-        #add action to menu
-        self.fileMenu.addAction(self.newAct)
-        self.editMenu.addAction(self.prefAct)
-
-        #Every 1000 ms will update the clock
-        self.game_time.start(1000)
         self.show()
 
     def create_grid_layout(self):
@@ -133,7 +151,11 @@ class DisplayMain(QMainWindow):
 
         for i in range(0,self.game_height):
             for j in range(0,self.game_width):
-                #self.grid_buttons[(i,j)] = QPushButton("{}".format(self.main_board.game_board[i][j]))
+                # self.grid_buttons[(i,j)] = QPushButton("{}".format(self.main_board.game_board[i][j]))
+                # self.grid_buttons[(i,j)].clicked.connect(self.buttonClicked)
+                # self.grid_buttons[(i,j)].setObjectName("{},{}".format(i,j))
+                # self.grid.addWidget(self.grid_buttons[(i,j)],i,j)
+                # continue
                 if self.main_board.display_board[i][j]:
                     #add QLabel to grid_buttons array?
                     self.grid.addWidget(QLabel(str(self.main_board.view_board[i][j])))
@@ -171,6 +193,11 @@ class DisplayMain(QMainWindow):
 
     def buttonClicked(self):
         #determine the source of the signal
+        if self.new_game:
+            self.new_game = False
+            #Every 1000 ms will update the clock
+            self.game_time.start(1000)
+            
         if self.game_time.isActive():
             sender = self.sender()
             #print(sender.objectName())
@@ -207,6 +234,7 @@ class DisplayMain(QMainWindow):
         else:
             print("Clock is not running")
 
+
     def update_time(self):
         self.time_display += 1
         self.time_label.setText('Time: {}'.format(self.time_display))
@@ -214,11 +242,12 @@ class DisplayMain(QMainWindow):
     def edit_preferences(self):
         print("Edit Preferences")
         #create labels
-        self.pref_widget = PopUpWindow(self.game_height, self.game_width, self.game_bombs)
         self.pref_widget.setGeometry(300, 300, 250, 150)
         self.pref_widget.setWindowTitle('Preferences')
         self.pref_widget.show()
 
+    def leave_game(self):
+        qApp.quit()
 
 
     #might not need this, when doing a click action I can just use self.flag_mode.isChecked()
