@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 ## BUG: corner display either shouldn't show corners where there isn't a hint or clear that whole area too
+## BUG: Game over should only be when you clear all hints, not find all bombs, shouldn't let self.bombs_guess be less than 0 
 
 ### TODO: If you hit a bomb display where the bombs are that you haven't flagged
 

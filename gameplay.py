@@ -89,7 +89,7 @@ class Board(object):
         #randomly picks num_bombs number of coordinates for places to put bombs
         self.bomb_locations = random.sample(range(0,self.game_width * self.game_height), self.game_bombs)
         #print("Temporarily setting to static list for testing")
-        #self.bomb_locations = [71,28,36,37,34,11,50,47,66,21]
+        #self.bomb_locations = [54, 15, 59, 69, 79, 17, 11, 70, 41, 30] #this will give a good grid for testing the open corner
         for i in range(0,self.game_height):
             for j in range(0, self.game_width):
                 #turn 2d array into 1d
@@ -98,7 +98,7 @@ class Board(object):
                     #print('Bomb placed at i:{} j:{}\nWhere curr_val:{}'.format(i, j, curr_val ))
                     self.game_board[i][j] = 'X'
 
-        #print(self.bomb_locations)
+        print(self.bomb_locations)
         #now need to fill all other places on the board with a number showing how many bombs are near by
         for i in range(0,self.game_height):
             for j in range(0, self.game_width):
@@ -220,10 +220,12 @@ class Board(object):
                             self.correct_hint_count += 1
                             self.display_board[i+1][j+1] = True
     def check_game_over(self):
-        #Flagged all correct bombs
+        #Flagged all correct bombs - Not an actual game over condition
+        '''
         if self.correct_bomb_count == self.game_bombs:
             self.game_over = True
             self.game_over_message = "All bombs flagged! You win!"
+        '''
 
         #cleared all hint squares, only bombs remain
         if self.correct_hint_count == self.hint_count:
