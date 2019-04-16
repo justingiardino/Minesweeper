@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 ## BUG: corner display either shouldn't show corners where there isn't a hint or clear that whole area too
-## BUG: File and Edit get added again when doing a new game - Fixed
 
 import sys
 import gameplay
@@ -72,24 +71,6 @@ class DisplayMain(QMainWindow):
         self.new_game_height = 9
         self.new_game_width = 9
         self.new_game_bombs = 10
-        #menu bar
-        menubar =self.menuBar()
-
-        #menus
-        self.fileMenu =  menubar.addMenu('File')
-        self.editMenu = menubar.addMenu('Edit')
-
-        #actions
-        self.newAct = QAction('New Game', self)
-        self.prefAct = QAction('Preferences', self)
-
-        #action events
-        self.newAct.triggered.connect(self.initUI)
-        self.prefAct.triggered.connect(self.edit_preferences)
-
-        #add action to menu
-        self.fileMenu.addAction(self.newAct)
-        self.editMenu.addAction(self.prefAct)
         self.initUI()
 
     def initUI(self):
@@ -122,7 +103,24 @@ class DisplayMain(QMainWindow):
         self.display.setLayout(main_layout)
         self.setCentralWidget(self.display)
 
+        #menu bar
+        menubar =self.menuBar()
 
+        #menus
+        self.fileMenu =  menubar.addMenu('File')
+        self.editMenu = menubar.addMenu('Edit')
+
+        #actions
+        self.newAct = QAction('New Game', self)
+        self.prefAct = QAction('Preferences', self)
+
+        #action events
+        self.newAct.triggered.connect(self.initUI)
+        self.prefAct.triggered.connect(self.edit_preferences)
+
+        #add action to menu
+        self.fileMenu.addAction(self.newAct)
+        self.editMenu.addAction(self.prefAct)
 
         #Every 1000 ms will update the clock
         self.game_time.start(1000)
