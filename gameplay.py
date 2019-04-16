@@ -152,18 +152,18 @@ class Board(object):
         temp_val = (i_check * self.game_width + j_check)
         #print(temp_val)
         if temp_val in self.bomb_locations:
-            print("Bomb found!")
+            #print("Bomb found!")
             self.view_board[i_check][j_check] = 'X'
             self.display_board[i_check][j_check] = True
             self.bomb_found = True
         else:
-            print("No bomb there")
+            #print("No bomb there")
             #self.display_board[y_check][x_check] = True
             self.flood_fill(i_check, j_check)
             self.corner_display()
-        self.print_board()
-        self.print_board_game()
-        self.check_game_over()
+        # self.print_board()
+        # self.print_board_game()
+        # self.check_game_over()
 
     def flood_fill(self, i_check, j_check):
 
@@ -262,6 +262,9 @@ def main():
             locations = input("> ").split(',')
             print(locations)
             main_board.check_bomb(int(locations[1]),int(locations[0]))
+            main_board.print_board()
+            main_board.print_board_game()
+            main_board.check_game_over()
         elif user_choice == 2:
             print("Select a location to place a flag(horizontal,vertical)")
             locations = input("> ").split(',')

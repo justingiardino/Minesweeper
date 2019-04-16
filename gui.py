@@ -2,10 +2,12 @@
 
 ## BUG: corner display either shouldn't show corners where there isn't a hint or clear that whole area too
 
+### TODO: Finish logic on check_int
+
 import sys
 import gameplay
-from PyQt5.QtWidgets import QMainWindow, QGridLayout, QPushButton, QApplication, QWidget, QApplication, QVBoxLayout, QGroupBox, QAction, QCheckBox, QDockWidget, QLabel, QHBoxLayout, QLineEdit, qApp
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtWidgets import QMainWindow, QGridLayout, QPushButton, QApplication, QWidget, QApplication, QVBoxLayout, QGroupBox, QAction, QCheckBox, QDockWidget, QLabel, QHBoxLayout, QLineEdit, qApp, QStatusBar
+from PyQt5.QtCore import Qt, QTimer, QSize
 #from PyQt5.QtGui import QDrag
 
 class PopUpWindow(QWidget):
@@ -14,6 +16,11 @@ class PopUpWindow(QWidget):
         self.pop_height = pop_height
         self.pop_width = pop_width
         self.pop_bombs = pop_bombs
+        self.valid_int = True
+        self.pref_status = QStatusBar()
+        self.pref_status_label = QLabel()
+        self.pref_status.addWidget(self.pref_status_label)
+        self.pref_status.hide()
         self.getVals()
 
     def getVals(self):
@@ -62,20 +69,36 @@ class PopUpWindow(QWidget):
         self.final_display.addLayout(difficulty_box)
         self.final_display.addLayout(self.pref_grid)
         self.final_display.addLayout(button_box)
+        self.final_display.addWidget(self.pref_status)
 
         #self.setLayout(self.pref_grid)
         self.setLayout(self.final_display)
 
     def ok_push(self):
-        print("Ok was clicked")
-        self.pop_height = int(self.height_edit.text())
-        self.pop_width = int(self.width_edit.text())
-        self.pop_bombs = int(self.bombs_edit.text())
-        #print("\n\n=================\npop_height:{}\npop_width:{}\npop_bombs:{}\n=================\n\n".format(self.pop_height, self.pop_width, self.pop_bombs))
-        self.close()
+        #print("Ok was clicked")
+        #reset flag to true, then recheck all values before submitting
+        self.valid_int = True
+        self.check_int(self.height_edit.text())
+        self.check_int(self.width_edit.text())
+        self.check_int(self.bombs_edit.text())
+        if self.valid_int:
+            #Make sure there are less bombs than number of squares
+            if int(self.bombs_edit.text()) < (int(self.width_edit.text()) * int(self.height_edit.text())):
+                self.pop_height = int(self.height_edit.text())
+                self.pop_width = int(self.width_edit.text())
+                self.pop_bombs = int(self.bombs_edit.text())
+                self.pref_status_label.setText("")
+                self.pref_status.hide()
+                #print("\n\n=================\npop_height:{}\npop_width:{}\npop_bombs:{}\n=================\n\n".format(self.pop_height, self.pop_width, self.pop_bombs))
+                self.close()
+            else:
+                self.pref_status.show()
+                self.pref_status_label.setText("Error: Too many bombs")
+
 
     def cancel_push(self):
-        print("Cancel was clicked")
+        #print("Cancel was clicked")
+        self.pref_status.hide()
         self.close()
 
         '''
@@ -84,22 +107,44 @@ class PopUpWindow(QWidget):
         Advanced:     H:16 W:30 B:99
         '''
     def beg_push(self):
-        print("Beginner")
+        #print("Beginner")
         self.height_edit.setText("9")
         self.width_edit.setText("9")
         self.bombs_edit.setText("10")
 
     def int_push(self):
-        print("Intermediate")
+        #print("Intermediate")
         self.height_edit.setText("16")
         self.width_edit.setText("16")
         self.bombs_edit.setText("40")
 
     def adv_push(self):
-        print("Advanced")
+        #print("Advanced")
         self.height_edit.setText("16")
         self.width_edit.setText("30")
         self.bombs_edit.setText("99")
+
+
+# '''
+# If the value can become an int, need to verify that
+# 1) The number is positive
+# 2) There are more squares than bombs: bombs < h * w
+# 3) Max board size?
+# May need to collapse check_int into
+# '''
+    def check_int(self, check_val):
+        try:
+            int(check_val)
+        except ValueError:
+            #print('{} is not able to become an int'.format(check_val))
+            self.valid_int = False
+            #self.statusBar.showMessage("{} is not a valid entry.".format())
+            self.pref_status_label.setText("{} is not a valid entry.".format(check_val))
+            self.pref_status.show()
+        else:
+            pass
+            #check dimensions
+            #print('{} is now an integer'.format(check_val))
 
 class DisplayMain(QMainWindow):
 
@@ -137,6 +182,7 @@ class DisplayMain(QMainWindow):
         self.fileMenu.addAction(self.leaveAct)
 
         #initialize display
+        self.grid_size = QSize(20,20)
         self.initUI()
 
     def initUI(self):
@@ -156,7 +202,7 @@ class DisplayMain(QMainWindow):
         self.game_time = QTimer() #create timer to show how long it took to finish the game
         self.time_display = 0
         self.flag_mode = QCheckBox('Flag Mode', self) #change mode that user is playing in
-        self.flag_mode.toggled.connect(self.flag_change)
+        #self.flag_mode.toggled.connect(self.flag_change)
         self.bomb_label = QLabel('Bombs Remaining: {}'.format(self.bomb_guess))
         self.time_label = QLabel('Time: {}'.format(self.time_display))
         self.game_time.timeout.connect(self.update_time) #time start is called on the first button click
@@ -166,6 +212,7 @@ class DisplayMain(QMainWindow):
         temp_layout.addWidget(self.bomb_label) #right
         #create grid for display
         self.create_grid_layout()
+        self.grid.setSpacing(2)
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(temp_layout)
@@ -173,8 +220,6 @@ class DisplayMain(QMainWindow):
         self.display.setLayout(main_layout)
         self.setCentralWidget(self.display)
         self.adjustSize()
-        #self.createPopUpMenu()
-
 
         self.show()
 
@@ -183,18 +228,14 @@ class DisplayMain(QMainWindow):
         self.horizontalGroupBox = QGroupBox("Game")
         for i in range(0,self.game_height):
             for j in range(0,self.game_width):
-                # self.grid_buttons[(i,j)] = QPushButton("{}".format(self.main_board.game_board[i][j]))
-                # self.grid_buttons[(i,j)].clicked.connect(self.buttonClicked)
-                # self.grid_buttons[(i,j)].setObjectName("{},{}".format(i,j))
-                # self.grid.addWidget(self.grid_buttons[(i,j)],i,j)
-                # continue
+                #This shouldn't ever be true, may not need it
                 if self.main_board.display_board[i][j]:
-                    #add QLabel to grid_buttons array?
                     self.grid.addWidget(QLabel(str(self.main_board.view_board[i][j])))
                 else:
                     self.grid_buttons[(i,j)] = QPushButton(" ")
                     self.grid_buttons[(i,j)].clicked.connect(self.buttonClicked)
                     self.grid_buttons[(i,j)].setObjectName("{},{}".format(i,j))
+                    self.grid_buttons[(i,j)].setFixedSize(self.grid_size)
                     self.grid.addWidget(self.grid_buttons[(i,j)],i,j)
 
         self.horizontalGroupBox.setLayout(self.grid)
@@ -202,21 +243,26 @@ class DisplayMain(QMainWindow):
     def update_grid_layout(self):
         for i in range(0,self.game_height):
             for j in range(0,self.game_width):
-                #self.grid_buttons[(i,j)] = QPushButton("{}".format(self.main_board.game_board[i][j]))
+                #if display board is true at these coordinates display the hint at that value
                 if self.main_board.display_board[i][j]:
                     label = QLabel(str(self.main_board.view_board[i][j]))
                     label.setStyleSheet("QLabel { background-color : silver; color : black; }")
+                    label.setFixedSize(self.grid_size)
                     self.grid.addWidget(label,i,j)
+                #display flag
                 elif self.main_board.view_board[i][j] == "^":
                     self.grid_buttons[(i,j)] = QPushButton("^")
                     self.grid_buttons[(i,j)].clicked.connect(self.buttonClicked)
+                    #Use objectName later to get coordinates of button that was clicked
                     self.grid_buttons[(i,j)].setObjectName("{},{}".format(i,j))
+                    self.grid_buttons[(i,j)].setFixedSize(self.grid_size)
                     self.grid.addWidget(self.grid_buttons[(i,j)],i,j)
+                #display regular flag
                 else:
-                    self.grid_buttons[(i,j)] = QPushButton(" ")#production
-                    #self.grid_buttons[(i,j)] = QPushButton(self.main_board.game_board[i][j])#test
+                    self.grid_buttons[(i,j)] = QPushButton(" ")
                     self.grid_buttons[(i,j)].clicked.connect(self.buttonClicked)
                     self.grid_buttons[(i,j)].setObjectName("{},{}".format(i,j))
+                    self.grid_buttons[(i,j)].setFixedSize(self.grid_size)
                     self.grid.addWidget(self.grid_buttons[(i,j)],i,j)
 
     def clear_grid_layout(self):
@@ -234,7 +280,7 @@ class DisplayMain(QMainWindow):
             sender = self.sender()
             #print(sender.objectName())
             locations = sender.objectName().split(',')
-            self.statusBar().showMessage(sender.objectName() + ' was pressed.')
+            #self.statusBar().showMessage(sender.objectName() + ' was pressed.')
             if self.flag_mode.isChecked():
                 #Add flag to square
                 if sender.text() == " ":
@@ -251,13 +297,13 @@ class DisplayMain(QMainWindow):
                     if self.main_board.game_board[int(locations[0])][int(locations[1])] == 'X':
                         self.main_board.correct_bomb_count -= 1
             else:
-                #add a condition when flag mode is disabled, but they click on a place where there is a flag
-                #print(locations)
-                self.main_board.check_bomb(int(locations[0]),int(locations[1]))
+                #flag mode is disabled, but they click on a place where there is a flag do nothing
+                if sender.text() == " ":
+                    self.main_board.check_bomb(int(locations[0]),int(locations[1]))
 
             self.clear_grid_layout()
             self.update_grid_layout()
-            print("\n===============\ngame_bombs: {}\ncorrect_bomb_count: {}\nhint_count: {}\ncorrect_hint_count: {}\n===============\n".format(self.main_board.game_bombs,self.main_board.correct_bomb_count,self.main_board.hint_count,self.main_board.correct_hint_count))
+            #print("\n===============\ngame_bombs: {}\ncorrect_bomb_count: {}\nhint_count: {}\ncorrect_hint_count: {}\n===============\n".format(self.main_board.game_bombs,self.main_board.correct_bomb_count,self.main_board.hint_count,self.main_board.correct_hint_count))
             self.main_board.check_game_over()
             if self.main_board.game_over:
                 self.game_time.stop()
@@ -272,7 +318,7 @@ class DisplayMain(QMainWindow):
         self.time_label.setText('Time: {}'.format(self.time_display))
 
     def edit_preferences(self):
-        print("Edit Preferences")
+        #print("Edit Preferences")
         #create labels
         self.pref_widget.setGeometry(300, 300, 250, 150)
         self.pref_widget.setWindowTitle('Preferences')
