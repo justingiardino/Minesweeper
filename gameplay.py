@@ -2,18 +2,6 @@
 #from math import floor
 import random
 
-"""
-## Done:
-Build Board with bombs and clues
-Basic Gameplay with clearing square and displaying clues
-"""
-
-"""
-## TODO:
-Better gameover logic
-GUI
-"""
-
 class Board(object):
 
     def __init__(self, game_height, game_width, game_bombs):

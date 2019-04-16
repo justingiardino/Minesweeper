@@ -38,7 +38,18 @@ class PopUpWindow(QWidget):
         self.pref_grid.addWidget(self.bombs_label, 3, 0)
         self.pref_grid.addWidget(self.bombs_edit, 3, 1)
 
-        #Hbox for two buttons on bottom, in Vbox put grid on top and button box on bottom
+        #Hbox for two buttons on bottom, Hbox for three buttons on top for difficulty, in Vbox put difficulty on top, grid in the middle and button box on bottom
+        difficulty_box = QHBoxLayout()
+        beg_button = QPushButton("Beginner")
+        beg_button.clicked.connect(self.beg_push)
+        int_button = QPushButton("Intermediate")
+        int_button.clicked.connect(self.int_push)
+        adv_button = QPushButton("Advanced")
+        adv_button.clicked.connect(self.adv_push)
+        difficulty_box.addWidget(beg_button)
+        difficulty_box.addWidget(int_button)
+        difficulty_box.addWidget(adv_button)
+
         button_box = QHBoxLayout()
         ok_button = QPushButton("Ok")
         ok_button.clicked.connect(self.ok_push)
@@ -48,6 +59,7 @@ class PopUpWindow(QWidget):
         button_box.addWidget(cancel_button)
 
         self.final_display = QVBoxLayout()
+        self.final_display.addLayout(difficulty_box)
         self.final_display.addLayout(self.pref_grid)
         self.final_display.addLayout(button_box)
 
@@ -65,26 +77,47 @@ class PopUpWindow(QWidget):
     def cancel_push(self):
         print("Cancel was clicked")
         self.close()
-'''
-Beginner:     H:9  W:9  B:10
-Intermediate: H:16 W:16 B:40
-Advanced:     H:16 W:30 B:99
-'''
+
+        '''
+        Beginner:     H:9  W:9  B:10
+        Intermediate: H:16 W:16 B:40
+        Advanced:     H:16 W:30 B:99
+        '''
+    def beg_push(self):
+        print("Beginner")
+        self.height_edit.setText("9")
+        self.width_edit.setText("9")
+        self.bombs_edit.setText("10")
+
+    def int_push(self):
+        print("Intermediate")
+        self.height_edit.setText("16")
+        self.width_edit.setText("16")
+        self.bombs_edit.setText("40")
+
+    def adv_push(self):
+        print("Advanced")
+        self.height_edit.setText("16")
+        self.width_edit.setText("30")
+        self.bombs_edit.setText("99")
+
 class DisplayMain(QMainWindow):
 
     def __init__(self):
         super().__init__()
         self.title = 'Main Window'
-        #Will default to this game setting, will need to be able to change in preferences later
 
-        #menu bar
-        menubar =self.menuBar()
+        #default start parameters
         self.game_height = 9
         self.game_width = 9
         self.game_bombs = 10
-        #menus
+
+        #create pop up window object
         self.pref_widget = PopUpWindow(self.game_height, self.game_width, self.game_bombs)
-        menubar.setNativeMenuBar(False)
+
+        #menus - Only need to be created once
+        menubar =self.menuBar()
+        menubar.setNativeMenuBar(False) #This fixes an issue with the mac display
         self.fileMenu =  menubar.addMenu('&File')
         self.editMenu = menubar.addMenu('&Edit')
 
@@ -102,30 +135,31 @@ class DisplayMain(QMainWindow):
         self.fileMenu.addAction(self.newAct)
         self.editMenu.addAction(self.prefAct)
         self.fileMenu.addAction(self.leaveAct)
-        self.initUI()
 
+        #initialize display
+        self.initUI()
 
     def initUI(self):
         #print("\n\n=================\npref_widget.pop_height:{}\npref_widget.pop_width:{}\npref_widget.pop_bombs:{}\n=================\n\n".format(self.pref_widget.pop_height, self.pref_widget.pop_width, self.pref_widget.pop_bombs))
-
+        #Check to see if the preferences have been updated
         self.game_height = self.pref_widget.pop_height
         self.game_width = self.pref_widget.pop_width
         self.game_bombs = self.pref_widget.pop_bombs
         #print("\n\n=================\ngame_height:{}\ngame_width:{}\ngame_bombs:{}\n=================\n\n".format(self.game_height, self.game_width, self.game_bombs))
-        self.new_game = True
+        self.new_game = True #used to start clock on first button click
         self.grid_buttons = {}
-        self.grid = QGridLayout()
-        self.display = QWidget()
+        self.grid = QGridLayout() #
+        self.display = QWidget() #Widget to place grid and top row of game information
         self.statusBar()
-        self.bomb_guess = self.game_bombs
+        self.bomb_guess = self.game_bombs #counter for number of bombs remaining
         self.main_board = gameplay.Board(self.game_height, self.game_width, self.game_bombs)
-        self.game_time = QTimer()
+        self.game_time = QTimer() #create timer to show how long it took to finish the game
         self.time_display = 0
-        self.flag_mode = QCheckBox('Flag Mode', self)
+        self.flag_mode = QCheckBox('Flag Mode', self) #change mode that user is playing in
         self.flag_mode.toggled.connect(self.flag_change)
         self.bomb_label = QLabel('Bombs Remaining: {}'.format(self.bomb_guess))
         self.time_label = QLabel('Time: {}'.format(self.time_display))
-        self.game_time.timeout.connect(self.update_time)
+        self.game_time.timeout.connect(self.update_time) #time start is called on the first button click
         temp_layout = QHBoxLayout()
         temp_layout.addWidget(self.flag_mode) #Left
         temp_layout.addWidget(self.time_label) #middle
@@ -147,8 +181,6 @@ class DisplayMain(QMainWindow):
     def create_grid_layout(self):
 
         self.horizontalGroupBox = QGroupBox("Game")
-        #self.grid.setColumnStretch(0,1)
-
         for i in range(0,self.game_height):
             for j in range(0,self.game_width):
                 # self.grid_buttons[(i,j)] = QPushButton("{}".format(self.main_board.game_board[i][j]))
@@ -197,7 +229,7 @@ class DisplayMain(QMainWindow):
             self.new_game = False
             #Every 1000 ms will update the clock
             self.game_time.start(1000)
-            
+
         if self.game_time.isActive():
             sender = self.sender()
             #print(sender.objectName())
