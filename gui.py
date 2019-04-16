@@ -2,7 +2,7 @@
 
 ## BUG: corner display either shouldn't show corners where there isn't a hint or clear that whole area too
 
-### TODO: Finish logic on check_int
+### TODO: If you hit a bomb display where the bombs are that you haven't flagged
 
 import sys
 import gameplay
@@ -84,13 +84,17 @@ class PopUpWindow(QWidget):
         if self.valid_int:
             #Make sure there are less bombs than number of squares
             if int(self.bombs_edit.text()) < (int(self.width_edit.text()) * int(self.height_edit.text())):
-                self.pop_height = int(self.height_edit.text())
-                self.pop_width = int(self.width_edit.text())
-                self.pop_bombs = int(self.bombs_edit.text())
-                self.pref_status_label.setText("")
-                self.pref_status.hide()
-                #print("\n\n=================\npop_height:{}\npop_width:{}\npop_bombs:{}\n=================\n\n".format(self.pop_height, self.pop_width, self.pop_bombs))
-                self.close()
+                if (int(self.width_edit.text()) in range(1,51)) and (int(self.height_edit.text()) in range(1,51)):
+                    self.pop_height = int(self.height_edit.text())
+                    self.pop_width = int(self.width_edit.text())
+                    self.pop_bombs = int(self.bombs_edit.text())
+                    self.pref_status_label.setText("")
+                    self.pref_status.hide()
+                    #print("\n\n=================\npop_height:{}\npop_width:{}\npop_bombs:{}\n=================\n\n".format(self.pop_height, self.pop_width, self.pop_bombs))
+                    self.close()
+                else:
+                    self.pref_status.show()
+                    self.pref_status_label.setText("Error: Board must have dimensions less than 50x50")
             else:
                 self.pref_status.show()
                 self.pref_status_label.setText("Error: Too many bombs")
@@ -108,18 +112,21 @@ class PopUpWindow(QWidget):
         '''
     def beg_push(self):
         #print("Beginner")
+        self.pref_status.hide()
         self.height_edit.setText("9")
         self.width_edit.setText("9")
         self.bombs_edit.setText("10")
 
     def int_push(self):
         #print("Intermediate")
+        self.pref_status.hide()
         self.height_edit.setText("16")
         self.width_edit.setText("16")
         self.bombs_edit.setText("40")
 
     def adv_push(self):
         #print("Advanced")
+        self.pref_status.hide()
         self.height_edit.setText("16")
         self.width_edit.setText("30")
         self.bombs_edit.setText("99")
@@ -150,7 +157,8 @@ class DisplayMain(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.title = 'Main Window'
+        self.title = 'Minesweeper'
+        self.setWindowTitle(self.title)
 
         #default start parameters
         self.game_height = 9
@@ -204,7 +212,7 @@ class DisplayMain(QMainWindow):
         self.flag_mode = QCheckBox('Flag Mode', self) #change mode that user is playing in
         #self.flag_mode.toggled.connect(self.flag_change)
         self.bomb_label = QLabel('Bombs Remaining: {}'.format(self.bomb_guess))
-        self.time_label = QLabel('Time: {}'.format(self.time_display))
+        self.time_label = QLabel('Time: 00{}'.format(self.time_display))
         self.game_time.timeout.connect(self.update_time) #time start is called on the first button click
         temp_layout = QHBoxLayout()
         temp_layout.addWidget(self.flag_mode) #Left
@@ -315,7 +323,12 @@ class DisplayMain(QMainWindow):
 
     def update_time(self):
         self.time_display += 1
-        self.time_label.setText('Time: {}'.format(self.time_display))
+        if len(str(self.time_display)) == 1:
+            self.time_label.setText('Time: 00{}'.format(self.time_display))
+        elif len(str(self.time_display)) == 2:
+            self.time_label.setText('Time: 0{}'.format(self.time_display))
+        else:
+            self.time_label.setText('Time: {}'.format(self.time_display))
 
     def edit_preferences(self):
         #print("Edit Preferences")

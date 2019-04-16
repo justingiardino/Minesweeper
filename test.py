@@ -10,9 +10,14 @@ for word in my_text:
 
 aa = 3
 bb = 4
-cc = 12
+cc = 0
 
 if cc < (aa * bb):
     print("Allowed")
 else:
     print("Not Allowed")
+
+if cc in range(1,13):
+    print("In range")
+else:
+    print("not in range")
