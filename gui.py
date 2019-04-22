@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 
-## BUG: corner display either shouldn't show corners where there isn't a hint or clear that whole area too
-## BUG: Game over should only be when you clear all hints, not find all bombs, shouldn't let self.bombs_guess be less than 0 
+## BUG: Game over should only be when you clear all hints, not find all bombs, shouldn't let self.bombs_guess be less than 0
 
-### TODO: If you hit a bomb display where the bombs are that you haven't flagged
+## TODO: If you hit a bomb display where the bombs are that you haven't flagged
 
 import sys
 import gameplay
@@ -29,16 +28,13 @@ class PopUpWindow(QWidget):
         self.width_label = QLabel("Width:")
         self.bombs_label = QLabel("Bombs:")
 
-        #create line edit objects
         self.height_edit = QLineEdit(str(self.pop_height))
         self.width_edit = QLineEdit(str(self.pop_width))
         self.bombs_edit = QLineEdit(str(self.pop_bombs))
 
-        #create a grid
+        #grid for getting user input
         self.pref_grid = QGridLayout()
         self.pref_grid.setSpacing(10)
-
-        #add widgets to grid
         self.pref_grid.addWidget(self.height_label, 1, 0)
         self.pref_grid.addWidget(self.height_edit, 1, 1)
         self.pref_grid.addWidget(self.width_label, 2, 0)
@@ -46,7 +42,7 @@ class PopUpWindow(QWidget):
         self.pref_grid.addWidget(self.bombs_label, 3, 0)
         self.pref_grid.addWidget(self.bombs_edit, 3, 1)
 
-        #Hbox for two buttons on bottom, Hbox for three buttons on top for difficulty, in Vbox put difficulty on top, grid in the middle and button box on bottom
+        #Difficulty display buttons
         difficulty_box = QHBoxLayout()
         beg_button = QPushButton("Beginner")
         beg_button.clicked.connect(self.beg_push)
@@ -58,6 +54,7 @@ class PopUpWindow(QWidget):
         difficulty_box.addWidget(int_button)
         difficulty_box.addWidget(adv_button)
 
+        #Ok and cancel buttons
         button_box = QHBoxLayout()
         ok_button = QPushButton("Ok")
         ok_button.clicked.connect(self.ok_push)
@@ -85,6 +82,7 @@ class PopUpWindow(QWidget):
         if self.valid_int:
             #Make sure there are less bombs than number of squares
             if int(self.bombs_edit.text()) < (int(self.width_edit.text()) * int(self.height_edit.text())):
+                #Make sure width and length are a positive numbr less than 50
                 if (int(self.width_edit.text()) in range(1,51)) and (int(self.height_edit.text()) in range(1,51)):
                     self.pop_height = int(self.height_edit.text())
                     self.pop_width = int(self.width_edit.text())
@@ -132,14 +130,6 @@ class PopUpWindow(QWidget):
         self.width_edit.setText("30")
         self.bombs_edit.setText("99")
 
-
-# '''
-# If the value can become an int, need to verify that
-# 1) The number is positive
-# 2) There are more squares than bombs: bombs < h * w
-# 3) Max board size?
-# May need to collapse check_int into
-# '''
     def check_int(self, check_val):
         try:
             int(check_val)
@@ -255,7 +245,11 @@ class DisplayMain(QMainWindow):
                 #if display board is true at these coordinates display the hint at that value
                 if self.main_board.display_board[i][j]:
                     label = QLabel(str(self.main_board.view_board[i][j]))
-                    label.setStyleSheet("QLabel { background-color : silver; color : black; }")
+                    label.setAlignment(Qt.AlignCenter)
+                    if self.main_board.view_board[i][j] == 'X':
+                        label.setStyleSheet("QLabel { background-color : red; color : black; }")
+                    else:
+                        label.setStyleSheet("QLabel { background-color : silver; color : black; }")
                     label.setFixedSize(self.grid_size)
                     self.grid.addWidget(label,i,j)
                 #display flag
@@ -273,6 +267,12 @@ class DisplayMain(QMainWindow):
                     self.grid_buttons[(i,j)].setObjectName("{},{}".format(i,j))
                     self.grid_buttons[(i,j)].setFixedSize(self.grid_size)
                     self.grid.addWidget(self.grid_buttons[(i,j)],i,j)
+
+    def game_over_grid_layout(self):
+
+        for i in range(0,self.game_height):
+            for j in range(0,self.game_width):
+                pass
 
     def clear_grid_layout(self):
         for i in reversed(range(self.grid.count())):
@@ -310,16 +310,19 @@ class DisplayMain(QMainWindow):
                 if sender.text() == " ":
                     self.main_board.check_bomb(int(locations[0]),int(locations[1]))
 
-            self.clear_grid_layout()
-            self.update_grid_layout()
+
             #print("\n===============\ngame_bombs: {}\ncorrect_bomb_count: {}\nhint_count: {}\ncorrect_hint_count: {}\n===============\n".format(self.main_board.game_bombs,self.main_board.correct_bomb_count,self.main_board.hint_count,self.main_board.correct_hint_count))
             self.main_board.check_game_over()
             if self.main_board.game_over:
                 self.game_time.stop()
                 self.statusBar().showMessage(self.main_board.game_over_message)
-                print(self.main_board.game_over_message)
-        else:
-            print("Clock is not running")
+
+            self.clear_grid_layout()
+            self.update_grid_layout()
+                #print(self.main_board.game_over_message)
+        #else:
+            #print("Clock is not running")
+        #    pass
 
 
     def update_time(self):
